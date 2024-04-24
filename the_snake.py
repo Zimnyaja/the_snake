@@ -14,7 +14,8 @@ RIGHT = (1, 0)
 
 BOARD_BACKGROUND_COLOR = (0, 0, 0)
 BORDER_COLOR = (93, 216, 228)
-APPLE_COLOR = (255, 0, 0)
+APPLE_COLOR = (255, 128, 0)
+STONE_COLOR = (160, 160, 160)
 SNAKE_COLOR = (0, 255, 0)
 SPEED = 9
 
@@ -166,30 +167,70 @@ def handle_keys(game_object):
                 game_object.next_direction = RIGHT
 
 
+def checking_intersection(snake, object_position, tested_position):
+    """Функция проверяет пересечение координат объекта со змеей.
+    Используется для проверки новой рандомной позиции объектов.
+    Работает при наличии 2х объектов Яблока на поле.
+    """
+    if tested_position in (*snake, object_position):
+        return True
+
+
 def main():
     """Ниже тело основной программы"""
     pygame.init()
 
     apple = Apple()
     snake = Snake()
-
+    stone = Apple(body_color=STONE_COLOR)
     running = True
 
     while running:
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
         clock.tick(SPEED)
+
+        def checking_intersection(snake, object_position, tested_position):
+            if tested_position in (*snake, object_position):
+                return True
+
+        while checking_intersection(snake.positions, stone.position,
+                                    apple.position):
+            apple.randomize_position()
+        while checking_intersection(snake.positions, apple.position,
+                                    stone.position):
+            stone.randomize_position()
+
         apple.draw()
+        stone.draw()
         snake.move()
         snake.draw()
         handle_keys(snake)
         snake.update_direction()
 
-        if apple.position in snake.positions:
+        if apple.position in snake.positions and snake.lenght % 5 == 0:
             snake.lenght += 1
             apple.randomize_position()
+            while checking_intersection(snake.positions, stone.position,
+                                        apple.position):
+                apple.randomize_position()
+            stone.randomize_position()
+            while checking_intersection(snake.positions, apple.position,
+                                        stone.position):
+                stone.randomize_position()
+            screen.fill(BOARD_BACKGROUND_COLOR)
+        elif apple.position in snake.positions:
+            snake.lenght += 1
+            apple.randomize_position()
+            while checking_intersection(snake.positions, stone.position,
+                                        apple.position):
+                apple.randomize_position()
+
+        if stone.position in snake.positions:
+            snake.reset()
 
         pygame.display.update()
 
