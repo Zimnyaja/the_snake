@@ -27,10 +27,11 @@ clock = pygame.time.Clock()
 class GameObject:
     """Главный класс игры. Родитель для основных объектов."""
 
-    position = [((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))]
+    position = ((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))
     body_color = ()
 
     def __init__(self, position=position, body_color=body_color):
+        """Инициализируем объект."""
         self.position = position
         self.body_color = body_color
 
@@ -46,10 +47,7 @@ class Apple(GameObject):
     body_color = APPLE_COLOR
 
     def __init__(self, position=position, body_color=body_color):
-        """Инициализируем объект. Если позиция и цвет не указаны, значения
-        берем из аргументов класса Яблоко. Если указана конкретная позиция
-        яблока (разные вариации игры), оставляем её. Если нет - рандом.
-        """
+        """Инициализируем объект класса Яблоко. Позиция рандомная."""
         super().__init__(position, body_color)
         self.position = self.randomize_position()
 
@@ -70,13 +68,14 @@ class Snake(GameObject):
     """Змея собственной персоной. Описывает змею и её поведение."""
 
     lenght = 1
-    positions = GameObject.position
-    direction = RIGHT  # [(positions[0][0] + GRID_SIZE, positions[0][1])]
+    positions = [GameObject.position]
+    direction = RIGHT
     next_direction = None
     body_color = SNAKE_COLOR
 
     def __init__(self, pose=positions, color=body_color, direction=direction,
                  next=next_direction, len=lenght):
+        """Инициализируем змею."""
         super().__init__(pose, color)
         self.positions = pose
         self.last = None
@@ -117,7 +116,6 @@ class Snake(GameObject):
             self.positions.pop()
 
         self.last = self.positions[-1]
-        # self.positions.pop()
 
     def draw(self):
         """Отрисовывает змею на экране, затирает хвост"""
@@ -141,19 +139,18 @@ class Snake(GameObject):
         return self.positions[0]
 
     def reset(self):
-        """Сбрасывает змею в начальное состояние после столкновения."""
+        """Сбрасывает змею в начальное состояние после столкновения.
+        Рандомно выбирает новое направление.
+        """
         self.lenght = 1
-        # a = self.position[0]
-        # self.positions = a
-        #self.last = None
-        #self.positions.clear()
-        self.positions = GameObject.position
-        # self.last = None
+        self.last = None
+        self.positions = [GameObject.position]
         self.direction = choice((RIGHT, LEFT, UP, DOWN))
         screen.fill(BOARD_BACKGROUND_COLOR)
 
 
 def handle_keys(game_object):
+    """Управление клавишами"""
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -170,10 +167,9 @@ def handle_keys(game_object):
 
 
 def main():
-    """Логика программы"""
+    """Ниже тело основной программы"""
     pygame.init()
 
-    # Тут нужно создать экземпляры классов.
     apple = Apple()
     snake = Snake()
 
@@ -191,13 +187,10 @@ def main():
         handle_keys(snake)
         snake.update_direction()
 
-       # a,b = apple.position
-       # c,d = snake.positions[0]
         if apple.position in snake.positions:
             snake.lenght += 1
             apple.randomize_position()
-        # Тут опишите основную логику игры.
-        # pygame.display.flip()
+
         pygame.display.update()
 
     pygame.quit()
