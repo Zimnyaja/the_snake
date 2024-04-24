@@ -24,7 +24,6 @@ pygame.display.set_caption('Змейка')
 clock = pygame.time.Clock()
 
 
-# Тут опишите все классы игры.
 class GameObject:
     """Главный класс игры. Родитель для основных объектов."""
 
@@ -37,7 +36,7 @@ class GameObject:
         self.body_color = body_color
 
     def draw(self):
-        """Заявляем функцию, пока она пустая."""
+        """Заявляем функцию. Пока она пустая."""
         pass
 
 
@@ -50,12 +49,19 @@ class Apple(GameObject):
     def __init__(self, position=position, body_color=body_color):
         """Инициализируем объект класса Яблоко. Позиция рандомная."""
         super().__init__(position, body_color)
-        self.position = self.randomize_position()
+        self.position = self.randomize_position((GameObject.position))
 
-    def randomize_position(self):
-        """Присваивает позиции случайное значение в пределах поля."""
+    def randomize_position(self, list, *args):
+        """Присваивает объекту случайное значение в пределах поля.
+        Проверяет пересечение с объектами на поле (формируется список
+        из обязательного списка и других яблок/объектов при наличии)
+        """
         self.position = ((randint(0, GRID_WIDTH - 1) * GRID_SIZE),
                          (randint(0, GRID_HEIGHT - 1) * GRID_SIZE))
+        list = (*list, args)
+        while self.position in list:
+            self.position = ((randint(0, GRID_WIDTH - 1) * GRID_SIZE),
+                             (randint(0, GRID_HEIGHT - 1) * GRID_SIZE))
         return self.position
 
     def draw(self):
@@ -167,15 +173,6 @@ def handle_keys(game_object):
                 game_object.next_direction = RIGHT
 
 
-def checking_intersection(snake, object_position, tested_position):
-    """Функция проверяет пересечение координат объекта со змеей.
-    Используется для проверки новой рандомной позиции объектов.
-    Работает при наличии 2х объектов Яблока на поле.
-    """
-    if tested_position in (*snake, object_position):
-        return True
-
-
 def main():
     """Ниже тело основной программы"""
     pygame.init()
@@ -193,17 +190,6 @@ def main():
 
         clock.tick(SPEED)
 
-        def checking_intersection(snake, object_position, tested_position):
-            if tested_position in (*snake, object_position):
-                return True
-
-        while checking_intersection(snake.positions, stone.position,
-                                    apple.position):
-            apple.randomize_position()
-        while checking_intersection(snake.positions, apple.position,
-                                    stone.position):
-            stone.randomize_position()
-
         apple.draw()
         stone.draw()
         snake.move()
@@ -213,21 +199,12 @@ def main():
 
         if apple.position in snake.positions and snake.lenght % 5 == 0:
             snake.lenght += 1
-            apple.randomize_position()
-            while checking_intersection(snake.positions, stone.position,
-                                        apple.position):
-                apple.randomize_position()
-            stone.randomize_position()
-            while checking_intersection(snake.positions, apple.position,
-                                        stone.position):
-                stone.randomize_position()
+            apple.randomize_position(snake.positions, stone.position)
+            stone.randomize_position(snake.positions, apple.position)
             screen.fill(BOARD_BACKGROUND_COLOR)
         elif apple.position in snake.positions:
             snake.lenght += 1
-            apple.randomize_position()
-            while checking_intersection(snake.positions, stone.position,
-                                        apple.position):
-                apple.randomize_position()
+            apple.randomize_position(snake.positions, stone.position)
 
         if stone.position in snake.positions:
             snake.reset()
