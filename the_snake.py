@@ -43,7 +43,7 @@ class GameObject:
         """Инициализируем объект."""
         self.position = position
         self.body_color = body_color
-    
+
     def draw(self):
         """Заявляем функцию. Пока она пустая."""
         raise NotImplementedError('Функция будет реализована'
