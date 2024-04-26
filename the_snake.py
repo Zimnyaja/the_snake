@@ -20,7 +20,7 @@ STONE_COLOR = (160, 160, 160)
 SNAKE_COLOR = (0, 255, 0)
 SPEED = 9
 
-KEY_DICT = {
+KEY_DIRECTION = {
     (LEFT, pg.K_UP): UP,
     (RIGHT, pg.K_UP): UP,
     (LEFT, pg.K_DOWN): DOWN,
@@ -32,7 +32,8 @@ KEY_DICT = {
 }
 
 screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
-pg.display.set_caption('Змейка')
+pg.display.set_caption('Змейка.  Управление - стрелки.  '
+                       'Выход - Esc.  Съедаем яблоко, избегаем камня.')
 clock = pg.time.Clock()
 
 
@@ -49,9 +50,11 @@ class GameObject:
         raise NotImplementedError('Функция будет реализована'
                                   'в классах наследниках')
 
-    def draw_one(self, pose, color_fill=BOARD_BACKGROUND_COLOR,
-                 color_out=BOARD_BACKGROUND_COLOR):
+    def draw_one(self, pose, color_fill=None, color_out=BORDER_COLOR):
+        # Сюда обязательно передавать color_out. Хвост змеи же без границ,
+        # нужно учесть его отсутствие.Я его в змее на черный меняю.
         """Отрисовывает один квадратик"""
+        color_fill = color_fill or self.body_color
         rect = pg.Rect(pose, (GRID_SIZE, GRID_SIZE))
         pg.draw.rect(screen, color_fill, rect)
         pg.draw.rect(screen, color_out, rect, 1)
@@ -60,10 +63,10 @@ class GameObject:
 class Apple(GameObject):
     """Яблочко. Описывает яблоко и действия с ним."""
 
-    def __init__(self, position=(), body_color=APPLE_COLOR):
+    def __init__(self, position=(), body_color=APPLE_COLOR, taken=()):
         """Инициализируем объект класса Яблоко. Позиция рандомная."""
         super().__init__(position, body_color)
-        self.randomize_position((CENTER))
+        self.randomize_position((CENTER, taken))
 
     def randomize_position(self, taken_position):
         """Присваивает объекту случайное значение в пределах поля.
@@ -77,13 +80,13 @@ class Apple(GameObject):
 
     def draw(self):
         """Отрисовывает яблоко в заданном цвете и позиции."""
-        self.draw_one(self.position, self.body_color, BORDER_COLOR)
+        self.draw_one(self.position)
 
 
 class Snake(GameObject):
     """Змея собственной персоной. Описывает змею и её поведение."""
 
-    def __init__(self, position=[CENTER], body_color=SNAKE_COLOR):
+    def __init__(self, position=CENTER, body_color=SNAKE_COLOR):
         """Инициализируем змею."""
         super().__init__(position, body_color)
         self.reset()
@@ -102,12 +105,8 @@ class Snake(GameObject):
         dx, dy = self.direction
         new_head = ((head[0] + dx * GRID_SIZE) % SCREEN_WIDTH,
                     (head[1] + dy * GRID_SIZE) % SCREEN_HEIGHT)
-
-        if new_head in self.positions[2:]:
-            self.reset()
-        else:
-            self.positions.insert(0, new_head)
-            self.last = self.positions[-1]
+        self.positions.insert(0, new_head)
+        self.last = self.positions[-1]
 
         if len(self.positions) > self.lenght:
             self.last = self.positions.pop()
@@ -115,13 +114,12 @@ class Snake(GameObject):
     def draw(self):
         """Отрисовывает змею на экране, затирает хвост"""
         for position in self.positions[:-1]:
-            # Тут была рекомендация убрать цикл. Но если ее убрать,
-            # При обновлении позиция камня, змея теряет свое тело.
-            self.draw_one(position, self.body_color, BORDER_COLOR)
+            self.draw_one(position)
 
-        self.draw_one(self.positions[0], self.body_color, BORDER_COLOR)
+        self.draw_one(self.positions[0])
         if self.last:
-            self.draw_one(self.last)
+            self.draw_one(self.last, BOARD_BACKGROUND_COLOR,
+                          BOARD_BACKGROUND_COLOR)
 
     def get_head_position(self):
         """Возвращает голову змеи. Первый элемент списка."""
@@ -135,7 +133,12 @@ class Snake(GameObject):
         self.last = None
         self.positions = [CENTER]
         self.direction = choice((RIGHT, LEFT, UP, DOWN))
-        screen.fill(BOARD_BACKGROUND_COLOR)
+
+
+def reset_screen(object):
+    """Сбрасывает объект, затирает экран"""
+    object.reset()
+    screen.fill(BOARD_BACKGROUND_COLOR)
 
 
 def handle_keys(game_object):
@@ -149,7 +152,7 @@ def handle_keys(game_object):
                 pg.quit()
                 raise SystemExit
             else:
-                game_object.next_direction = KEY_DICT.get(
+                game_object.next_direction = KEY_DIRECTION.get(
                     (game_object.direction, event.key), game_object.direction)
 
 
@@ -157,14 +160,17 @@ def main():
     """Ниже тело основной программы"""
     pg.init()
 
-    apple = Apple()
     snake = Snake()
-    stone = Apple(body_color=STONE_COLOR)
+    apple = Apple()
+    stone = Apple(body_color=STONE_COLOR, taken=apple.position)
 
     while True:
 
         clock.tick(SPEED)
         handle_keys(snake)
+
+        if snake.positions[0] in snake.positions[2:]:
+            reset_screen(snake)
 
         if apple.position in snake.positions and snake.lenght % 5 == 0:
             snake.lenght += 1
@@ -176,7 +182,7 @@ def main():
             apple.randomize_position([*snake.positions, stone.position])
 
         if stone.position in snake.positions:
-            snake.reset()
+            reset_screen(snake)
 
         snake.move()
         snake.update_direction()
