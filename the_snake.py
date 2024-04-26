@@ -148,10 +148,9 @@ def handle_keys(game_object):
             if event.key == pg.K_ESCAPE:
                 pg.quit()
                 raise SystemExit
-            elif (game_object.direction, event.key) in KEY_DICT:
-                game_object.next_direction = (
-                    KEY_DICT.get((game_object.direction, event.key),
-                                 game_object.direction))
+            else:
+                game_object.next_direction = KEY_DICT.get(
+                    (game_object.direction, event.key), game_object.direction)
 
 
 def main():
