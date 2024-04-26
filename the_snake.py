@@ -51,8 +51,6 @@ class GameObject:
                                   'в классах наследниках')
 
     def draw_one(self, pose, color_fill=None, color_out=BORDER_COLOR):
-        # Сюда обязательно передавать color_out. Хвост змеи же без границ,
-        # нужно учесть его отсутствие.Я его в змее на черный меняю.
         """Отрисовывает один квадратик"""
         color_fill = color_fill or self.body_color
         rect = pg.Rect(pose, (GRID_SIZE, GRID_SIZE))
@@ -63,7 +61,7 @@ class GameObject:
 class Apple(GameObject):
     """Яблочко. Описывает яблоко и действия с ним."""
 
-    def __init__(self, position=(), body_color=APPLE_COLOR, taken=()):
+    def __init__(self, position=(), body_color=APPLE_COLOR, taken=[]):
         """Инициализируем объект класса Яблоко. Позиция рандомная."""
         super().__init__(position, body_color)
         self.randomize_position((CENTER, taken))
@@ -161,8 +159,9 @@ def main():
     pg.init()
 
     snake = Snake()
-    apple = Apple()
-    stone = Apple(body_color=STONE_COLOR, taken=apple.position)
+    apple = Apple(snake.positions)
+    stone = Apple(body_color=STONE_COLOR, taken=[*snake.positions,
+                                                 apple.position])
 
     while True:
 
@@ -176,12 +175,13 @@ def main():
             snake.lenght += 1
             apple.randomize_position([*snake.positions, stone.position])
             stone.randomize_position([*snake.positions, apple.position])
+
             screen.fill(BOARD_BACKGROUND_COLOR)
         elif apple.position in snake.positions:
             snake.lenght += 1
             apple.randomize_position([*snake.positions, stone.position])
 
-        if stone.position in snake.positions:
+        if (stone.position in snake.positions):
             reset_screen(snake)
 
         snake.move()
