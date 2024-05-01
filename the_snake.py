@@ -32,18 +32,16 @@ KEY_DIRECTION = {
 }
 
 screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
-pg.display.set_caption('Змейка.  Управление - стрелки.  '
-                       'Выход - Esc.  Съедаем яблоко, избегаем камня.')
 clock = pg.time.Clock()
 
 
 class GameObject:
     """Главный класс игры. Родитель для основных объектов."""
 
-    def __init__(self, position=CENTER, body_color=()):
+    def __init__(self, body_color=None, position=CENTER):
         """Инициализируем объект."""
-        self.position = position
         self.body_color = body_color
+        self.position = position
 
     def draw(self):
         """Заявляем функцию. Пока она пустая."""
@@ -61,10 +59,10 @@ class GameObject:
 class Apple(GameObject):
     """Яблочко. Описывает яблоко и действия с ним."""
 
-    def __init__(self, position=(), body_color=APPLE_COLOR, taken=[]):
+    def __init__(self, body_color=APPLE_COLOR, taken=[]):
         """Инициализируем объект класса Яблоко. Позиция рандомная."""
-        super().__init__(position, body_color)
-        self.randomize_position((CENTER, taken))
+        super().__init__(body_color)
+        self.randomize_position(taken)
 
     def randomize_position(self, taken_position):
         """Присваивает объекту случайное значение в пределах поля.
@@ -84,9 +82,9 @@ class Apple(GameObject):
 class Snake(GameObject):
     """Змея собственной персоной. Описывает змею и её поведение."""
 
-    def __init__(self, position=CENTER, body_color=SNAKE_COLOR):
+    def __init__(self, body_color=SNAKE_COLOR):
         """Инициализируем змею."""
-        super().__init__(position, body_color)
+        super().__init__(body_color)
         self.reset()
         self.direction = RIGHT
         self.next_direction = None
@@ -159,7 +157,7 @@ def main():
     pg.init()
 
     snake = Snake()
-    apple = Apple(snake.positions)
+    apple = Apple(taken=[snake.positions])
     stone = Apple(body_color=STONE_COLOR, taken=[*snake.positions,
                                                  apple.position])
 
@@ -167,6 +165,10 @@ def main():
 
         clock.tick(SPEED)
         handle_keys(snake)
+
+        pg.display.set_caption('Змейка.  Управление - стрелки.  '
+                               'Выход - Esc.  Съедаем яблоко, избегаем камня. '
+                               f'{snake.lenght}')
 
         if snake.positions[0] in snake.positions[2:]:
             reset_screen(snake)
